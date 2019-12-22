@@ -1,0 +1,25 @@
+											Deploying OpenShift 3.11  Cluster
+										    ##################################
+											
+infra1structure Setup:
+----------------------
+
+
+Hostname						IP Address		CPUs		RAM	HDD				OS			Role
+master.openshift.example.com	192.168.0.50	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Master Node
+node1.openshift.example.com		192.168.0.51	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Worker Node 
+node2.openshift.example.com		192.168.0.52	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Worker Node
+infra1.openshift.example.com	192.168.0.53	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	infra1 Node										
+
+
+Step 1: Install Openshift Packages on Master,Compute,Infra
+******************
+yum -y update
+
+yum install vim -y
+
+yum install -y wget git  nano net-tools docker-1.13.1 bind-utils iptables-services bridge-utils bash-completion kexec-tools sos psacct openssl-devel httpd-tools NetworkManager python-cryptography python-devel python-passlib java-1.8.0-openjdk-headless "@Development Tools"
+
+ 
+
+
