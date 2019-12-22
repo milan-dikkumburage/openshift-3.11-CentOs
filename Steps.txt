@@ -19,6 +19,170 @@ yum install vim -y
 
 yum install -y wget git  nano net-tools docker-1.13.1 bind-utils iptables-services bridge-utils bash-completion kexec-tools sos psacct openssl-devel httpd-tools NetworkManager python-cryptography python-devel python-passlib java-1.8.0-openjdk-headless "@Development Tools"
 
+Step 2: Modify 'NetworkManager.conf' file on Master,Compute,Infra
+*****************************************************************
+
+vim /etc/NetworkManager/NetworkManager.conf
+[main]
+#plugins=ifcfg-rh,ibft
+dns=none
+
+wq!
+
+-------------------------------------------
+
+vim /etc/sysconfig/network-scripts/ifcfg-eth0   (ifcfg-eth0 is my ethernet) add below records
+
+PEERDNS=yes
+DNS1=8.8.8.8
+
+wq!
+
+step 3 : Modify 'resolv.conf' file on Master,Compute,Infra
+**********************************************************
+vim /etc/resolv.conf
+
+search slopenshift.dns-cloud.net ( add your custom domain) 
+nameserver 8.8.8.8
+
+systemctl restart NetworkManager
+
+step 4: Reboot Master,Compute,Infra
+***********************************
+reboot
+
+step 5: Install and enable epel 7 on Master,Compute,Infra
+*********************************************************
+
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sed -i -e "s/^enabled=1/enabled=0/" /etc/yum.repos.d/epel.repo
+
+step 6: Install docker on Master,Compute,Infra
+**********************************************
+yum install docker-1.13.1
+docker version
+
+Enable docker & start service on Master,Compute,Infra
+systemctl enable docker.service --now
+systemctl status docker.service
+
+step 7:Install ansible on Master machine
+****************************************
+
+yum install ansible
+yum remove ansible ( If ansible version is less than 2.4 or 2.8 then remove, install ansible 2.7 from package)
+rpm -Uvh https://releases.ansible.com/ansible/rpm/release/epel-7-x86_64/ansible-2.7.10-1.el7.ans.noarch.rpm
+ansible --version
+
+step 8: Makesure ssh enable all VMs
+***********************************
+vim /etc/ssh/sshd_config
+
+PasswordAuthentication yes
+PubkeyAuthentication yes
+systemctl restart sshd
+passwd root ( set the root pw)
+
+step 9: set the hostname 
+************************
+
+hostnamectl set-hostname master.slopenshift.dns-cloud.net (master node)
+hostnamectl set-hostname infra.slopenshift.dns-cloud.net (infra node)
+hostnamectl set-hostname node01.slopenshift.dns-cloud.net (worker node)
+
+
+step 10: Generate SSH Key on master machine and copy key on Compute and Infra
+*****************************************************************************
+ssh-keygen (master node)
+ssh-copy-id -i /root/.ssh/id_rsa.pub root@infra.slopenshift.dns-cloud.net
+ssh-copy-id -i /root/.ssh/id_rsa.pub root@node01.slopenshift.dns-cloud.net
+ssh-copy-id -i /root/.ssh/id_rsa.pub root@master.slopenshift.dns-cloud.net
+
+step 11: create inventory.ini file in master home directory.Then add below config details.
+******************************************************************************************
+
+# Create an OSEv3 group that contains the masters, nodes, and etcd groups
+[OSEv3:children]
+masters
+nodes
+etcd
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+# SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user=root
+# If ansible_ssh_user is not root, ansible_become must be set to true
+ansible_become=true
+openshift_master_default_subdomain=app.infra.slopenshift.dns-cloud.net
+deployment_type=origin
+
+[nodes:vars]
+openshift_disable_check=disk_availability,memory_availability,docker_storage
+[masters:vars]
+openshift_disable_check=disk_availability,memory_availability,docker_storage
+# uncomment the following to enable htpasswd authentication; defaults to DenyAllPasswordIdentityProvider
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+
+# host group for masters
+[masters]
+master.slopenshift.dns-cloud.net
+
+# host group for etcd
+[etcd]
+master.slopenshift.dns-cloud.net
+
+
+# host group for nodes, includes region info
+[nodes]
+master.slopenshift.dns-cloud.net openshift_node_group_name='node-config-master'
+node01.slopenshift.dns-cloud.net openshift_node_group_name='node-config-compute'
+infra.slopenshift.dns-cloud.net  openshift_node_group_name='node-config-infra'
+
+
+
+step 12 : Clone Openshift Origin source code
+********************************************
+git clone https://github.com/openshift/openshift-ansible.git
+
+step 13 : Checkout Origin 3.11 release 
+**************************************
+cd openshift-ansible && git fetch && git checkout release-3.11 && cd ..
+
+step 14: confirm selinux setting on Master,Compute,Infra
+********************************************************
+vi /etc/selinux/config
+SELINUX=enforcing
+SELINUXTYPE=targeted
+
+step 15: Excute playbook on master machine
+******************************************
+
+ansible-playbook -i inventory.ini openshift-ansible/playbooks/prerequisites.yml
+ansible-playbook -i inventory.ini openshift-ansible/playbooks/deploy_cluster.yml
+
+step 16: Reset password of system admin on master machine 
+*********************************************************
+htpasswd -c /etc/origin/master/htpasswd admin
+
+step 17: add cluster admin role to the user
+*******************************************
+oc adm policy add-cluster-role-to-user cluster-admin admin
+
+Step 18 : you can login to the gui as below 
+*******************************************
+
+oc login -u system:admin
+
+then it will show you the URL as : https://master.slopenshift.dns-cloud.net:8443
+
+
+
+
+
+
+
+
+
  
 
 
