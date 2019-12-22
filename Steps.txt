@@ -154,7 +154,7 @@ vi /etc/selinux/config
 SELINUX=enforcing
 SELINUXTYPE=targeted
 
-step 15: Excute playbook on master machine
+step 15: Execute playbook on master machine
 ******************************************
 
 ansible-playbook -i inventory.ini openshift-ansible/playbooks/prerequisites.yml
