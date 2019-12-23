@@ -5,10 +5,22 @@ infra1structure Setup:
 ----------------------
 
 
-Hostname						IP Address		CPUs		RAM	HDD				OS			Role
-master.openshift.example.com	192.168.0.50	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Master Node
-node1.openshift.example.com	192.168.0.51	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Worker Node 
-infra1.openshift.example.com	192.168.0.53	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	infra1 Node										
+Hostname						IP Address		CPUs		RAM	HDD				OS			 Role
+master.slopenshift.dns-cloud.net 64.225.53.100	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Master Node
+node01.slopenshift.dns-cloud.net 165.227.74.214	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	Worker Node 
+infra.slopenshift.dns-cloud.net	 64.225.53.104	 2	2 GB	/dev/sda (100 GB) 	CentOS7.X	infra1 Node
+
+
+---------------------------------------------------------------------------------------------------------
+You can create your own free DNS zone at www.cloudns.net. Please add DNS record as below with your domain
+*********************************************************************************************************
+
+infra.slopenshift.dns-cloud.net			A 	64.225.53.104
+master.slopenshift.dns-cloud.net		A	64.225.53.100 
+node01.slopenshift.dns-cloud.net	 	A	165.227.74.214
+app.infra.slopenshift.dns-cloud.net	 	A	64.225.53.104
+*.app.infra.slopenshift.dns-cloud.net		CNAME	app.infra.slopenshift.dns-cloud.net
+console.app.infra.slopenshift.dns-cloud.net	A	64.225.53.104
 
 
 Step 1: Install Openshift Packages on Master,Compute,Infra
